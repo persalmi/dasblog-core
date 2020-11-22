@@ -216,3 +216,4 @@ source/DasBlog.Web.UI/content
 test_results/
 test_results.xml
 /source/DasBlog.Tests/FunctionalTests/Properties/launchSettings.json
+/source/.vscode/solution-explorer

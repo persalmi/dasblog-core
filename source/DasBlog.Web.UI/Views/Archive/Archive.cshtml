@@ -12,6 +12,7 @@
     ViewData["Title"] = Constants.ArchivePageTitle;
 }
 
+<div class="container">
 <span class="dbc-span-month-control">
     <span class="dbc-span-month-control-older">
         <a asp-controller="Archive" asp-action="Archive" asp-route-year="@previous.Year" asp-route-month="@previous.Month">&lt;&lt;</a>
@@ -76,6 +77,8 @@
             }
         }
     </ol>
+</div>
+
 </div>
 
 

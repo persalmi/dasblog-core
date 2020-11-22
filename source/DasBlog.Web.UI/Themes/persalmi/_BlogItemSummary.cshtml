@@ -1,0 +1,24 @@
+﻿@model PostViewModel
+
+<div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-6">
+    <div class="row">
+        <div class="d-flex flex-nowrap flex-fill p-4 mb-4">
+            <div class="flex-fill mr-4">
+                <small class="text-muted">
+                    <post-categories-list post="@Model" />
+                </small>
+                <h3 class="mb-0">
+                    <post-title-link post=@Model />
+                </h3>
+                <small class="mb-1 text-muted">
+                    <post-created-date post="@Model" />
+                </small>
+                <p class="card-text mb-auto">
+                    <post-content post="@Model" strip-html="true" content-length="180" />
+                </p>
+                <post-title-link post=@Model>Continue reading...</post-title-link>
+            </div>
+            <post-thumbnail-image post="@Model" css="post-summary-thumb-bg col-5"/>
+        </div>
+    </div>
+</div>

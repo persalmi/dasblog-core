@@ -242,6 +242,7 @@ namespace DasBlog.Web
 
 				options.CheckConsentNeeded = context => flag;
 				options.MinimumSameSitePolicy = SameSiteMode.None;
+				options.Secure = CookieSecurePolicy.Always;
 			});
 
 			services.AddQuartz(q =>
@@ -408,6 +409,9 @@ namespace DasBlog.Web
 						   .CustomSources(SecurityScriptSources)
 						.UnsafeInline()
 						.UnsafeEval()
+					)
+					.ImageSources(s => s.Self()
+						.CustomSources( new[] { "data:", "https:", "sp.tinymce.com" })
 					)
 				);
 			}
