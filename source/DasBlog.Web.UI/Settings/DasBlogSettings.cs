@@ -173,6 +173,11 @@ namespace DasBlog.Web.Settings
 
 		public string FilterHtml(string input)
 		{
+			if (string.IsNullOrWhiteSpace(input))
+			{
+				return string.Empty;
+			}
+
 			if (SiteConfiguration.ValidCommentTags == null || SiteConfiguration.ValidCommentTags[0].Tag.Count(s => s.Allowed == true) == 0)
 			{
 				return WebUtility.HtmlEncode(input);
@@ -224,6 +229,10 @@ namespace DasBlog.Web.Settings
 			if (!SiteConfiguration.EnableComments)
 			{
 				return false;
+			}
+			else if(SiteConfiguration.EnableComments && !SiteConfiguration.EnableCommentDays)
+			{
+				return true;
 			}
 
 			return (DateTime.UtcNow.AddDays(-1 * SiteConfiguration.DaysCommentsAllowed) < blogpostdate);

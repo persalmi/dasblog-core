@@ -1,0 +1,45 @@
+﻿@using DasBlog.Services;
+@using DasBlog.Core.Common;
+@using System.Net;
+@inject IDasBlogSettings dasBlogSettings
+@model List<CommentAdminViewModel>
+
+
+@{
+    ViewBag.Title = "Manage Comments";
+    Layout = "../../Themes/dasblog/_Layout.cshtml";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<div class="container">
+    <div>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col">Blog Title</th>
+                    <th scope="col">Name</th>
+                    <th scope="col">IP Address</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Comment Text</th>
+                    <th scope="col">Approval</th>
+                    <th scope="col">Delete</th>
+                </tr>
+            </thead>
+            <tbody class="dbc-admin-comment-table">
+                @foreach (var comment in Model)
+                {
+                <tr>
+                    <td width="20%"><a href="@dasBlogSettings.GetPermaLinkUrl(comment.BlogPostId)">@comment.Title</a></td>
+                    <td width="15%"><a href="mailto:@comment.Email?subject=@comment.Title">@comment.Name</a></td>
+                    <td width="5%">@comment.AuthorIPAddress</td>
+                    <td width="10%">@comment.SpamState</td>
+                    <td width="30%">@comment.Text</td>
+                    <td width="10%"><comment-approval-link comment="@comment" admin="true" /></td>
+                    <td width="10%"><comment-delete-link comment="@comment" admin="true" /></td>
+                </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

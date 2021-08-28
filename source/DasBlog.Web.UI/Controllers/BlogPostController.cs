@@ -73,7 +73,8 @@ namespace DasBlog.Web.Controllers
 					PostId = entry.EntryId,
 					PostDate = entry.CreatedUtc,
 					CommentUrl = dasBlogSettings.GetCommentViewUrl(posttitle),
-					ShowComments = dasBlogSettings.SiteConfiguration.ShowCommentsWhenViewingEntry
+					ShowComments = dasBlogSettings.SiteConfiguration.ShowCommentsWhenViewingEntry,
+					AllowComments = entry.AllowComments
 				};
 				pvm.Comments = lcvm;
 
@@ -99,21 +100,22 @@ namespace DasBlog.Web.Controllers
 			var entry = blogManager.GetBlogPostByGuid(postid);
 			if (entry != null)
 			{
+				var pvm = mapper.Map<PostViewModel>(entry);
 
-				/*
-				 * Very old DasBlog links like
-				 * /PermaLink.aspx?guid=b5790285-2eb7-4198-ac1d-6cfbf20735a4
-				 * turn into 
-				 * /post/b5790285-2eb7-4198-ac1d-6cfbf20735a4 
-				 * (given correct IISrewrites)
-				 * but fails to render because the Comments are never loaded, 
-				 * so you'll get the post but it shows ZERO comments. 
-				 * Better to just redirect to the right URL
-				 * I can't figure how to redirect 302 correctly given a /blog baseURL, so for now at least it doesn't break 
-				 * and has the right canonical
-				 * 				//return RedirectToAction("Post", "BlogPost", new { title = lpvm?.Posts?.First().PermaLink });
-				 */
-				lpvm.Posts = new List<PostViewModel>() { mapper.Map<PostViewModel>(entry) };
+				var lcvm = new ListCommentsViewModel
+				{
+					Comments = blogManager.GetComments(entry.EntryId, false)
+									.Select(comment => mapper.Map<CommentViewModel>(comment)).ToList(),
+					PostId = entry.EntryId,
+					PostDate = entry.CreatedUtc,
+					CommentUrl = dasBlogSettings.GetCommentViewUrl(entry.Title),
+					ShowComments = dasBlogSettings.SiteConfiguration.ShowCommentsWhenViewingEntry,
+					AllowComments = entry.AllowComments
+				};
+				pvm.Comments = lcvm;
+
+				lpvm.Posts = new List<PostViewModel>() { pvm };
+
 				return SinglePostView(lpvm);
 			}
 			else
@@ -186,15 +188,16 @@ namespace DasBlog.Web.Controllers
 				entry.Language = "en-us"; //TODO: We inject this fron http context?
 				entry.Latitude = null;
 				entry.Longitude = null;
-				
+
+				BreakSiteCache();
+
 				var sts = blogManager.UpdateEntry(entry);
-				if (sts != NBR.EntrySaveState.Updated)
+				if (sts == NBR.EntrySaveState.Failed)
 				{
 					ModelState.AddModelError("", "Failed to edit blog post. Please check Logs for more details.");
 					return View(post);
 				}
 
-				BreakSiteCache();
 			}
 			catch (Exception ex)
 			{
@@ -254,6 +257,7 @@ namespace DasBlog.Web.Controllers
 				var sts = blogManager.CreateEntry(entry);
 				if (sts != NBR.EntrySaveState.Added)
 				{
+					post.EntryId = entry.EntryId;
 					ModelState.AddModelError("", "Failed to create blog post. Please check Logs for more details.");
 					return View(post);
 				}
@@ -332,7 +336,8 @@ namespace DasBlog.Web.Controllers
 						PostId = entry.EntryId,
 						PostDate = entry.CreatedUtc,
 						CommentUrl = dasBlogSettings.GetCommentViewUrl(posttitle),
-						ShowComments = true
+						ShowComments = true,
+						AllowComments = entry.AllowComments
 					};
 
 					lpvm.Posts.First().Comments = lcvm;
@@ -364,7 +369,8 @@ namespace DasBlog.Web.Controllers
 						PostId = entry.EntryId,
 						PostDate = entry.CreatedUtc,
 						CommentUrl = dasBlogSettings.GetCommentViewUrl(comment.TargetEntryId),
-						ShowComments = true
+						ShowComments = true,
+						AllowComments = entry.AllowComments
 					};
 
                     if(comment != null)
@@ -391,20 +397,20 @@ namespace DasBlog.Web.Controllers
 		{
             List<string> errors = new List<string>();
 
-			if (!dasBlogSettings.SiteConfiguration.EnableComments)
-			{
-				return BadRequest();
-			}
-
 			if (!ModelState.IsValid)
 			{
-				return Comment(addcomment.TargetEntryId);
+				errors.Add("[Some of your entries are invalid]");
+			}
+
+			if (!dasBlogSettings.SiteConfiguration.EnableComments)
+			{
+				errors.Add("Comments are disabled on the site.");
 			}
 
 			// Optional in case of Captcha. Commenting the settings in the config file 
             // Will disable this check. People will typically disable this when using captcha.
-            if (!String.IsNullOrEmpty(dasBlogSettings.SiteConfiguration.CheesySpamQ) &&
-                !String.IsNullOrEmpty(dasBlogSettings.SiteConfiguration.CheesySpamA) && 
+            if (!string.IsNullOrEmpty(dasBlogSettings.SiteConfiguration.CheesySpamQ) &&
+                !string.IsNullOrEmpty(dasBlogSettings.SiteConfiguration.CheesySpamA) && 
                 dasBlogSettings.SiteConfiguration.CheesySpamQ.Trim().Length > 0 && 
 				dasBlogSettings.SiteConfiguration.CheesySpamA.Trim().Length > 0)
 			{
@@ -427,9 +433,10 @@ namespace DasBlog.Web.Controllers
                 }
             }
 
-            if(errors.Count > 0)
-                return CommentError(addcomment, errors);
-
+			if (errors.Count > 0)
+			{
+				return CommentError(addcomment, errors);
+			}
 
 			addcomment.Content = dasBlogSettings.FilterHtml(addcomment.Content);
 
@@ -440,36 +447,41 @@ namespace DasBlog.Web.Controllers
 			commt.EntryId = Guid.NewGuid().ToString();
 			commt.IsPublic = !dasBlogSettings.SiteConfiguration.CommentsRequireApproval;
 
+			logger.LogInformation(new EventDataItem(EventCodes.CommentAdded, null, "Comment CONTENT DUMP", commt.Content));
+
 			var state = blogManager.AddComment(addcomment.TargetEntryId, commt);
 
 			if (state == NBR.CommentSaveState.Failed)
 			{
-				ModelState.AddModelError("", "Comment failed");
-				return StatusCode(500);
+				logger.LogError(new EventDataItem(EventCodes.CommentBlocked, null, "Failed to save comment: {0}", commt.TargetTitle));
+				errors.Add("Failed to save comment.");
 			}
 
 			if (state == NBR.CommentSaveState.SiteCommentsDisabled)
 			{
-				ModelState.AddModelError("", "Comments are closed for this post");
-				return StatusCode(403);
+				logger.LogError(new EventDataItem(EventCodes.CommentBlocked, null, "Comments are closed for this post: {0}", commt.TargetTitle));
+				errors.Add("Comments are closed for this post.");
 			}
 
 			if (state == NBR.CommentSaveState.PostCommentsDisabled)
 			{
-				ModelState.AddModelError("", "Comment are currently disabled");
-				return StatusCode(403);
+				logger.LogError(new EventDataItem(EventCodes.CommentBlocked, null, "Comment are currently disabled: {0}", commt.TargetTitle));
+				errors.Add("Comment are currently disabled.");
 			}
 
 			if (state == NBR.CommentSaveState.NotFound)
 			{
-				ModelState.AddModelError("", "Invalid Target Post Id");
-				return NotFound();
+				logger.LogError(new EventDataItem(EventCodes.CommentBlocked, null, "Invalid Post Id: {0}", commt.TargetTitle));
+				errors.Add("Invalid Post Id.");
+			}
+
+			if (errors.Count > 0)
+			{
+				return CommentError(addcomment, errors);
 			}
 
 			logger.LogInformation(new EventDataItem(EventCodes.CommentAdded, null, "Comment created on: {0}", commt.TargetTitle));
-
 			BreakSiteCache();
-
 			return Comment(addcomment.TargetEntryId);
 		}
 

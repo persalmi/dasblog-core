@@ -3,8 +3,14 @@
 @inject IDasBlogSettings dasBlogSettings
 @model DasBlogSettingsViewModel
 
-<h1>Site Settings</h1>
 
+@{
+    ViewBag.Title = "Site Settings";
+    Layout = "../../Themes/dasblog/_Layout.cshtml";
+}
+
+<h1>@ViewData["Title"]</h1>
+<hr />
 @Html.ValidationSummary(false, "", new { @class = "text-danger" })
 
 <form asp-action="settings" name="UpdateSettingsForm" id="UpdateSettingsForm">
@@ -72,6 +78,13 @@
         @Html.LabelFor(m => @Model.SiteConfig.Copyright, null, new { @class = "dbc-col-form-label col-3" })
         @Html.TextBoxFor(m => @Model.SiteConfig.Copyright, null, new { @class = "form-control col-9" })
         @Html.ValidationMessageFor(m => m.SiteConfig.Copyright, null, new { @class = "text-danger" })
+
+    </div>
+
+    <div class="dbc-form-check row">
+
+        @Html.LabelFor(m => @Model.SiteConfig.EnableAboutView, null, new { @class = "dbc-col-form-label col-3" })
+        @Html.CheckBoxFor(m => @Model.SiteConfig.EnableAboutView, new { @class = "dbc-form-check-input" })
 
     </div>
 
@@ -428,7 +441,15 @@
 
     </div>
 
-    <div class="dbc-form-check row">
+    <div class="dbc-form-group row">
+
+        @Html.LabelFor(m => @Model.SiteConfig.SmtpFromEmail, null, new { @class = "dbc-col-form-label col-3" })
+        @Html.TextBoxFor(m => @Model.SiteConfig.SmtpFromEmail, null, new { @class = "form-control col-9" })
+        @Html.ValidationMessageFor(m => m.SiteConfig.SmtpFromEmail, null, new { @class = "text-danger" })
+
+    </div>
+
+<div class="dbc-form-check row">
 
         <label class="dbc-col-form-label col-3">SMTP Test</label>
         <input asp-controller="Admin" asp-action="TestEmail" type="submit" name="submit" value="Send test Email" class="btn-default" />
@@ -537,6 +558,14 @@
         @Html.LabelFor(m => @Model.SiteConfig.SecurityScriptSources, null, new { @class = "dbc-col-form-label col-3" })
         @Html.TextBoxFor(m => @Model.SiteConfig.SecurityScriptSources, null, new { @class = "form-control col-9" })
         @Html.ValidationMessageFor(m => m.SiteConfig.SecurityScriptSources, null, new { @class = "text-danger" })
+
+    </div>
+
+    <div class="dbc-form-group row">
+
+        @Html.LabelFor(m => @Model.SiteConfig.DefaultSources, null, new { @class = "dbc-col-form-label col-3" })
+        @Html.TextBoxFor(m => @Model.SiteConfig.DefaultSources, null, new { @class = "form-control col-9" })
+        @Html.ValidationMessageFor(m => m.SiteConfig.DefaultSources, null, new { @class = "text-danger" })
 
     </div>
 

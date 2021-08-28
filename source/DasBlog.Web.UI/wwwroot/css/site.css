@@ -40,7 +40,7 @@
 
 .dbc-calendar .days li {
     border-bottom: 1px solid #eee;
-    min-height: 8rem;
+    min-height: 10rem;
 }
 
     .dbc-calendar .days li .date {
@@ -145,8 +145,11 @@
     
 }
 
-.dbc-post-content img {
+.dbc-post-image-full {
     width: 100%;
     height: 100%;
 }
 
+tbody.dbc-admin-comment-table td {
+    word-break: break-all;
+}

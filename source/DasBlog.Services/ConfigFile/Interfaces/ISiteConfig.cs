@@ -98,6 +98,7 @@ namespace DasBlog.Services.ConfigFile.Interfaces
         bool SendPingbacksByEmail { get; set; }
 
         bool SendPostsByEmail { get; set; }
+        bool EnableAboutView { get; set; }
 
         bool EnableBloggerApi { get; set; }
 
@@ -235,6 +236,7 @@ namespace DasBlog.Services.ConfigFile.Interfaces
         bool EnableSmtpAuthentication { get; set; }
 
         string SmtpUserName { get; set; }
+        string SmtpFromEmail { get; set; }
 
         string SmtpPassword { get; set; }
 
@@ -344,6 +346,8 @@ namespace DasBlog.Services.ConfigFile.Interfaces
 		string SecurityScriptSources { get; set; }
 
 		string SecurityStyleSources { get; set; }
+
+		string DefaultSources { get; set; }
 
 		bool CookieConsentEnabled { get; set; }
 
