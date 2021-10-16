@@ -86,6 +86,10 @@
     border: none;
 }
 
+.dbc-a-category:before {
+    content: "#";
+}
+
 
 
 
