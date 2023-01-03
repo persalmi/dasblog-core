@@ -13,7 +13,7 @@
 
   <ItemGroup>
     <Content Include="dasblog-core.runtimeconfig.json">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
 
