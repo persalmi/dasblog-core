@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Coravel;
 using DasBlog.Core.Common;
 using DasBlog.Managers;
 using DasBlog.Managers.Interfaces;
@@ -29,7 +30,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Quartz;
 using System;
 using System.IO;
 using System.Linq;
@@ -178,6 +178,9 @@ namespace DasBlog.Web
 			services
 				.AddHttpContextAccessor();
 
+			services.AddScheduler();
+			services.AddTransient<SiteEmailReport>();
+
 			services
 				.AddTransient<IDasBlogSettings, DasBlogSettings>()
 				.AddTransient<IUserStore<DasBlogUser>, DasBlogUserStore>()
@@ -196,6 +199,7 @@ namespace DasBlog.Web
 				.AddSingleton<ISiteSecurityManager, SiteSecurityManager>()
 				.AddSingleton<IXmlRpcManager, XmlRpcManager>()
 				.AddSingleton<ISiteManager, SiteManager>()
+				.AddSingleton<IActivityPubManager, ActivityPubManager>()
 				.AddSingleton<IHttpContextAccessor, HttpContextAccessor>()
 				.AddSingleton<IFileSystemBinaryManager, FileSystemBinaryManager>()
 				.AddSingleton<IUserDataRepo, UserDataRepo>()
@@ -216,6 +220,7 @@ namespace DasBlog.Web
 					mapperConfig.AddProfile(new ProfilePost(serviceProvider.GetService<IDasBlogSettings>()));
 					mapperConfig.AddProfile(new ProfileDasBlogUser(serviceProvider.GetService<ISiteSecurityManager>()));
 					mapperConfig.AddProfile(new ProfileSettings());
+					mapperConfig.AddProfile(new ProfileActivityPub());
 				})
 				.AddMvc()
 				.AddXmlSerializerFormatters();
@@ -238,46 +243,6 @@ namespace DasBlog.Web
 				options.MinimumSameSitePolicy = SameSiteMode.None;
 				options.Secure = CookieSecurePolicy.Always;
 			});
-
-			services.AddQuartz(q =>
-			{
-				q.SchedulerId = "Scheduler-Core";
-
-				q.UseMicrosoftDependencyInjectionJobFactory(options =>
-				{
-					// if we don't have the job in DI, allow fallback to configure via default constructor
-					options.AllowDefaultConstructor = true;
-				});
-
-				q.UseSimpleTypeLoader();
-				q.UseInMemoryStore();
-				q.UseDefaultThreadPool(tp =>
-				{
-					tp.MaxConcurrency = 10;
-				});
-
-				var jobKey = new JobKey("key1", "main-group");
-
-				q.AddJob<SiteEmailReport>(j => j
-					.StoreDurably()
-					.WithIdentity(jobKey)
-					.WithDescription("Site report job")
-				);
-
-				q.AddTrigger(t => t
-					.WithIdentity("Simple Trigger")
-					.ForJob(jobKey)
-					.StartNow()
-					.WithSchedule(CronScheduleBuilder.DailyAtHourAndMinute(23, 45))
-					.WithDescription("my awesome simple trigger")
-
-				);
-			});
-
-			services.AddQuartzServer(options =>
-			{
-				options.WaitForJobsToComplete = true;
-			});
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -299,6 +264,14 @@ namespace DasBlog.Web
 			{
 				app.UseHsts(options => options.MaxAge(days: 30));
 			}
+
+			app.ApplicationServices.UseScheduler(scheduler =>
+			{
+				scheduler
+					.Schedule<SiteEmailReport>()
+					.DailyAt(23, 19)
+					.Zoned(TimeZoneInfo.Local);
+			});
 
 			if (!siteOk)
 			{

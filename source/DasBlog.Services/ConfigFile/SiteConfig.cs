@@ -51,6 +51,8 @@ namespace DasBlog.Services.ConfigFile
 	[XmlType("SiteConfig")]
 	public class SiteConfig : ISiteConfig
     {
+        private string _root;
+
         public SiteConfig() { }
 
         public string Title { get; set; }
@@ -58,7 +60,23 @@ namespace DasBlog.Services.ConfigFile
         public string Theme { get; set; }
         public string Description { get; set; }
         public string Contact { get; set; }
-        public string Root { get; set; }
+        public string Root {
+            get
+            {
+                return _root;
+            }
+            set 
+            {
+                if ( !string.IsNullOrEmpty(value) )
+                {
+                    _root = value + (value.EndsWith("/")?"":"/");
+                }
+                else
+                {
+                    _root = value;
+                }
+            }
+        }
 		public string AllowedHosts { get; set; }
 		public string Copyright { get; set; }
         public int RssDayCount { get; set; }
@@ -80,8 +98,10 @@ namespace DasBlog.Services.ConfigFile
         public bool SendPingbacksByEmail { get; set; }
         public bool SendPostsByEmail { get; set; }
         public bool EnableAboutView { get; set; }
+        public string TinyMCEApiKey { get; set; }
         public bool EnableBloggerApi { get; set; }
         public bool EnableComments { get; set; }
+        public bool AllowMarkdownInComments {get; set;}
         public bool EnableCommentApi { get; set; }
         public bool EnableConfigEditService { get; set; }
         public bool EnableEditService { get; set; }
@@ -218,5 +238,10 @@ namespace DasBlog.Services.ConfigFile
 		public string SecurityStyleSources { get; set; }
 
 		public string DefaultSources { get; set; }
+
+		public string MastodonServerUrl { get; set; }
+
+		public string MastodonAccount { get; set; }
+
 	}
 }

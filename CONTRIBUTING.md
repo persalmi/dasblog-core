@@ -19,8 +19,8 @@ If you would like to discuss a change you are thinking of doing before you start
 ### Install the tools
 To contribute code changes install the following dev tools:
 
-- Install [.NET Core SDK 3.1.1](https://dotnet.microsoft.com/download/dotnet-core/thank-you/runtime-aspnetcore-3.1.1-windows-x64-installer)
-- Install [Visual Studio Community 2019 (16.3.0 or newer)](https://visualstudio.microsoft.com/thank-you-downloading-visual-studio/?sku=Community&rel=16)
+- Install [Visual Studio Community 2022 (17.0 or newer)](https://visualstudio.microsoft.com/downloads/)
+- Visual Studio installs the [.NET SDK 6.0.100](https://dotnet.microsoft.com/download/dotnet/thank-you/sdk-6.0.100-windows-x64-installer)
 
 ### Contribute code
 To contribute code to the project simply:
@@ -28,3 +28,20 @@ To contribute code to the project simply:
   2. Change to the "source" directory and open the *DasBlog All.sln* and perform a build.
   3. Create a specific topic branch, add a nice feature or fix your bug
   4. Send a Pull Request and we will start to discuss how your changes fit in.
+
+### Architecture and Testing
+If you are looking to take a more proactive role and want to help design decisions please let me know by submitting issues. You can help by get involved by reviewing Issues and PRs. Actively running Selenium tests locally is also a huge help!
+
+#### Selenium install requirements
+- [Java](https://java.com/en/download/windows_manual.jsp)
+- [Node.js](https://nodejs.org/en/download/)
+- [Google Chrome](https://www.google.com/chrome/)
+
+Run the following from the command line:
+
+`npm install -g selenium-standalone@latest`
+
+`selenium-standalone install`
+
+Open [Test Explorer in Visual Studio](https://docs.microsoft.com/visualstudio/test/run-unit-tests-with-test-explorer) and you can run any of the tests.
+

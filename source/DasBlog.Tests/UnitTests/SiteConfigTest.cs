@@ -40,6 +40,7 @@ namespace DasBlog.Tests.UnitTests
 		public bool SendPostsByEmail { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 		public bool EnableAboutView { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 		public bool EnableBloggerApi { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+		public string TinyMCEApiKey { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 		public bool EnableComments { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 		public bool EnableCommentApi { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 		public bool EnableConfigEditService { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
@@ -167,5 +168,8 @@ namespace DasBlog.Tests.UnitTests
 
 		public string SecurityStyleSources { get; set; }
 		public string DefaultSources { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-	}
+		public string MastodonServerUrl { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+		public string MastodonAccount { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public bool AllowMarkdownInComments { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+       }
 }

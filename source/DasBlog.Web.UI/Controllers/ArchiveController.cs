@@ -13,22 +13,26 @@ using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using EventCodes = DasBlog.Services.ActivityLogs.EventCodes;
 using DasBlog.Services.ActivityLogs;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace DasBlog.Web.Controllers
 {
 	[Route("archive")]
-	[ResponseCache(Duration = 14400, Location = ResponseCacheLocation.Any)]
 	public class ArchiveController : DasBlogBaseController
 	{
 		private readonly IArchiveManager archiveManager;
 		private readonly IHttpContextAccessor httpContextAccessor;
 		private readonly IMapper mapper;
 		private readonly ILogger<ArchiveController> logger;
+		private readonly IDasBlogSettings dasBlogSettings;
+		private readonly IMemoryCache memoryCache;
 		private const string ARCHIVE = "Archive";
 
 		public ArchiveController(IArchiveManager archiveManager, IHttpContextAccessor httpContextAccessor, IMapper mapper,
-									ILogger<ArchiveController> logger, IDasBlogSettings settings) : base(settings)
+									ILogger<ArchiveController> logger, IDasBlogSettings settings, IMemoryCache memoryCache) : base(settings)
 		{
+			this.dasBlogSettings = settings;
+			this.memoryCache = memoryCache;
 			this.archiveManager = archiveManager;
 			this.httpContextAccessor = httpContextAccessor;
 			this.mapper = mapper;
@@ -75,24 +79,28 @@ namespace DasBlog.Web.Controllers
 			foreach (var year in listofyears)
 			{
 				entries.AddRange(
-				archiveManager.GetEntriesForYear(new DateTime(year, 1, 1) , languageFilter).OrderByDescending(x => x.CreatedUtc));
+				archiveManager.GetEntriesForYear(new DateTime(year, 1, 1), languageFilter).OrderByDescending(x => x.CreatedUtc));
 			}
 
-			var alvm = new ArchiveListViewModel();
-
-			foreach (var i in entries.ToList().Select(entry => mapper.Map<PostViewModel>(entry)).ToList())
+			if (!memoryCache.TryGetValue(CACHEKEY_ARCHIVE, out ArchiveListViewModel alvm))
 			{
-				var index = int.Parse(string.Format("{0}{1}", i.CreatedDateTime.Year, string.Format("{0:00}", i.CreatedDateTime.Month)));
+				alvm = new ArchiveListViewModel();
 
-				if (alvm.MonthEntries.ContainsKey(index))
+				foreach (var i in entries.ToList().Select(entry => mapper.Map<PostViewModel>(entry)).ToList())
 				{
-					alvm.MonthEntries[index].Add(i);
+					var index = int.Parse(string.Format("{0}{1}", i.CreatedDateTime.Year, string.Format("{0:00}", i.CreatedDateTime.Month)));
+
+					if (alvm.MonthEntries.ContainsKey(index))
+					{
+						alvm.MonthEntries[index].Add(i);
+					}
+					else
+					{
+						var list = new List<PostViewModel>() { i };
+						alvm.MonthEntries.Add(index, list);
+					}
 				}
-				else 
-				{
-					var list = new List<PostViewModel>() { i };
-					alvm.MonthEntries.Add(index, list);
-				}
+				memoryCache.Set(CACHEKEY_ARCHIVE, alvm, SiteCacheSettings());
 			}
 
 			return View(alvm);
@@ -122,9 +130,6 @@ namespace DasBlog.Web.Controllers
 
 			stopWatch.Stop();
 			logger.LogInformation(new DasBlog.Services.ActivityLogs.EventDataItem(EventCodes.Site, null, $"ArchiveController (Date: {dateTime.ToLongDateString()}; Year: {wholeYear}) Time elapsed: {stopWatch.Elapsed.TotalMilliseconds}ms"));
-
-			//TODO: Do I need this?
-			//entries = new EntryCollection(entries.OrderBy(e => e.CreatedUtc));
 
 			DefaultPage(ARCHIVE);
 			return MonthViewViewModel.Create(dateTime, entries, mapper);
