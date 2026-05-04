@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <SatelliteResourceLanguages>none</SatelliteResourceLanguages>
@@ -31,6 +31,8 @@
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" />
     <PackageReference Include="NetEscapades.Extensions.Logging.RollingFile" />
+    <PackageReference Include="NuGet.Packaging" />
+    <PackageReference Include="NuGet.Protocol" />
     <PackageReference Include="NWebsec.AspNetCore.Middleware" />
     <PackageReference Include="reCAPTCHA.AspNetCore" />
     <PackageReference Include="Quartz.AspNetCore" />
